@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from starlette.status import HTTP_201_CREATED, HTTP_404_NOT_FOUND
+from starlette.status import HTTP_201_CREATED, HTTP_404_NOT_FOUND, HTTP_200_OK
 from app.core.database import get_db
 from app.models.user import User, UserResponse, UserCreateResponse
 from app.crud import user_crud
@@ -15,6 +15,33 @@ def create_user(user: User, db: Session = Depends(get_db)):
     return {
         "message": "User created successfully!",
         "user": db_user
+    }
+@route.put(
+    "/{user_id}",
+    response_model=UserCreateResponse,
+    status_code=HTTP_200_OK
+)
+def update_user(user_id: int, user: User, db: Session = Depends(get_db)):
+    updated_user = user_crud.update_user(db, user_id, user)
+    if not updated_user:
+        raise HTTPException(
+            status_code=HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    return {
+        "message": "User updated successfully!",
+        "user": updated_user
+    }
+@route.delete("/{user_id}", status_code=HTTP_200_OK)
+def delete_user(user_id: int, db: Session = Depends(get_db)):
+    user=user_crud.delete_user(db, user_id)
+    if not user:
+        raise HTTPException(
+            status_code=HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    return {
+        "message": "User deleted successfully!"
     }
 @route.get("/", response_model=list[UserResponse])
 def get_users(db: Session = Depends(get_db)):
